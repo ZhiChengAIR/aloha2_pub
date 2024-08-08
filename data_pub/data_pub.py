@@ -4,6 +4,7 @@ from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor 
 from std_msgs.msg import Float64MultiArray 
 from data_pub.utils import MasterRobot
+import time
 
 
 class ArmPublisher(Node):
@@ -28,8 +29,9 @@ class ArmPublisher(Node):
         self.timer2 = self.create_timer(self.timer_period, self.publish_arm2_info)
 
     def publish_arm1_info(self):
-        now = self.get_clock().now()
-        timestamp_ = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+        # now = self.get_clock().now()
+        # timestamp_ = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+        timestamp_ = time.time()
         arm1_info = self.arm1.get_robot_data() 
         # self.get_logger().info(f'Publishing arm1: {timestamp_}')
         # self.get_logger().info(f'arm1_info: {arm1_info[0]+[arm1_info[1]]} type: {type(arm1_info)}')
@@ -49,8 +51,9 @@ class ArmPublisher(Node):
        
 
     def publish_arm2_info(self):
-        now = self.get_clock().now()
-        _timestamp = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+        # now = self.get_clock().now()
+        # _timestamp = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+        _timestamp = time.time()
         arm2_info = self.arm2.get_robot_data() 
         if not (isinstance(arm2_info, tuple) and len(arm2_info) == 2 and isinstance(arm2_info[0], list) and isinstance(arm2_info[1], float)):
             self.get_logger().error('arm2_info is not in the expected format')
