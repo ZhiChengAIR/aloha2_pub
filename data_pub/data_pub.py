@@ -48,8 +48,7 @@ class ArmPublisher(Node):
         msg.data = arm1_data
         self.arm1_publisher.publish(msg)
         # self.get_logger().info(f'Publishing arm1: {msg.data}')
-       
-
+    
     def publish_arm2_info(self):
         # now = self.get_clock().now()
         # _timestamp = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
