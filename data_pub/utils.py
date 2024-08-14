@@ -27,7 +27,7 @@ class MasterRobot():
             self.MASTER_OPEN = -21.3
             self.MASTER_CLOSE = -62
             self.SLAVE_OPEN = -27
-            self.SLAVE_CLOSE = 36
+            self.SLAVE_CLOSE = 42
 
         elif self.robot_name == "master_right":
             self.SERVO_PORTS_ARM = [
@@ -47,7 +47,7 @@ class MasterRobot():
             self.MASTER_OPEN = 5
             self.MASTER_CLOSE = 59
             self.SLAVE_OPEN = -32
-            self.SLAVE_CLOSE = 29
+            self.SLAVE_CLOSE = 41
           
      
         self.MASTER_HOME_POS_GRIPPER = [self.MASTER_OPEN, self.SLAVE_OPEN]
@@ -144,7 +144,7 @@ class MasterRobot():
         # 设置所有舵机为阻尼模式
         print("设置机械臂舵机为阻尼模式")
         for i, uservo in enumerate(self.uart_managers_arm):
-            uservo.set_damping(self.SERVO_IDS_ARM[i], 500)
+            uservo.set_damping(self.SERVO_IDS_ARM[i], 50)
             print(f"舵机 {self.SERVO_IDS_ARM[i]} 阻尼模式设置完成")
 
     
@@ -153,7 +153,6 @@ class MasterRobot():
         # Shared data between threads
         joint_pos = [0, 0, 0, 0, 0, 0]
         grip_percentage = [0] 
-
         def read_servo_angle(index, uservo, servo_id):
             angle = uservo.query_servo_angle(servo_id)
             if index == 2:

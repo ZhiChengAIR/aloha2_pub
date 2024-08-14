@@ -23,7 +23,7 @@ class ArmPublisher(Node):
         self.arm2.initialize_servos()
         self.get_logger().info(f'Initialization complete!')
         self.arm2.set_damping_mode() 
-        publish_frequency=1000
+        publish_frequency=100
         self.timer_period = 1.0 / publish_frequency  
         self.timer1 = self.create_timer(self.timer_period, self.publish_arm1_info)
         self.timer2 = self.create_timer(self.timer_period, self.publish_arm2_info)
@@ -34,7 +34,7 @@ class ArmPublisher(Node):
         timestamp_ = time.time()
         arm1_info = self.arm1.get_robot_data() 
         # self.get_logger().info(f'Publishing arm1: {timestamp_}')
-        # self.get_logger().info(f'arm1_info: {arm1_info[0]+[arm1_info[1]]} type: {type(arm1_info)}')
+        self.get_logger().info(f'arm1_info: {arm1_info[0]+[arm1_info[1]]} type: {type(arm1_info)}')
         if not (isinstance(arm1_info, tuple) and len(arm1_info) == 2 and isinstance(arm1_info[0], list) and isinstance(arm1_info[1], float)):
             self.get_logger().error('arm1_info is not in the expected format')
             return

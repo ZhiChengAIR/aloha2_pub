@@ -34,7 +34,7 @@ class CameraPublisher(Node):
         image_msg.format = "jpeg"
         image_msg.data = encimg.tobytes()
         self.publisher_.publish(image_msg)
-        self.get_logger().info(f"Published image from {self.get_name()}")
+        # self.get_logger().info(f"Published image from {self.get_name()}")
 
     def __del__(self):
         self.cap.release()
