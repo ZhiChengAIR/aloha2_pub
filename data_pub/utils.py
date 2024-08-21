@@ -11,6 +11,24 @@ import math
 from scipy.interpolate import interp1d
 import numpy as np
 
+def action_interpolation(robot_pose, action, interpolate_factor):
+    x_points = np.array([0, 1])
+    dims = len(robot_pose)
+    interpolate_nums = math.ceil(interpolate_factor) + 1
+
+    # 生成插值点
+    x_new = np.linspace(x_points[0], x_points[1], interpolate_nums)
+    actions = []
+    for dim in range(dims):
+        y_points = np.array([robot_pose[dim], action[dim]])
+        # 创建线性插值函数
+        linear_interp = interp1d(x_points, y_points, kind="linear")
+        y_new = linear_interp(x_new)
+        actions.append(y_new)
+    actions = np.array(actions)
+    actions = actions.transpose()
+    actions = actions.tolist()
+    return actions[1:]
 
 class MasterRobot:
 
@@ -78,24 +96,7 @@ class MasterRobot:
         self.uart_managers_arm = []
         self.uart_managers_gripper = []
 
-    def action_interpolation(robot_pose, action, interpolate_factor):
-        x_points = np.array([0, 1])
-        dims = len(robot_pose)
-        interpolate_nums = math.ceil(interpolate_factor) + 1
 
-        # 生成插值点
-        x_new = np.linspace(x_points[0], x_points[1], interpolate_nums)
-        actions = []
-        for dim in range(dims):
-            y_points = np.array([robot_pose[dim], action[dim]])
-            # 创建线性插值函数
-            linear_interp = interp1d(x_points, y_points, kind="linear")
-            y_new = linear_interp(x_new)
-            actions.append(y_new)
-        actions = np.array(actions)
-        actions = actions.transpose()
-        actions = actions.tolist()
-        return actions[1:]
 
     def initialize_servos(self):
 
@@ -211,13 +212,16 @@ class MasterRobot:
         )
 
         arm_data = self.joint_pos
-        if not all(isinstance(i, float) for i in arm_data[0]):
+        if not all(isinstance(i, float) for i in arm_data):
             self.printer.error(
                 f"Not all elements in the first part of {self.robot_name} are floats"
             )
             return
 
-        interpolated_arm_data = self.action_interpolation(
+        if self.last_arm_data == None:
+            self.last_arm_data = arm_data
+
+        interpolated_arm_data = action_interpolation(
             self.last_arm_data, arm_data, self.interpolate_factor
         )
         self.last_arm_data = arm_data
