@@ -6,6 +6,10 @@ import serial
 import threading
 from data_pub.uservo import UartServoManager
 import time
+from collections import deque
+import math
+from scipy.interpolate import interp1d
+import numpy as np
 
 
 class MasterRobot:
@@ -18,6 +22,9 @@ class MasterRobot:
         self.printer = printer
         self.timer_period = timer_period
         self.read_data_state = 0
+        self.arm_data_deque = deque(maxlen=1000)
+        self.last_arm_data = None
+        self.interpolate_factor = 2
         if self.robot_name == "master_left":
             self.SERVO_PORTS_ARM = [
                 "/dev/ttyCH9344USB0",
@@ -70,6 +77,25 @@ class MasterRobot:
         self.SERVO_BAUDRATE = 115200
         self.uart_managers_arm = []
         self.uart_managers_gripper = []
+
+    def action_interpolation(robot_pose, action, interpolate_factor):
+        x_points = np.array([0, 1])
+        dims = len(robot_pose)
+        interpolate_nums = math.ceil(interpolate_factor) + 1
+
+        # 生成插值点
+        x_new = np.linspace(x_points[0], x_points[1], interpolate_nums)
+        actions = []
+        for dim in range(dims):
+            y_points = np.array([robot_pose[dim], action[dim]])
+            # 创建线性插值函数
+            linear_interp = interp1d(x_points, y_points, kind="linear")
+            y_new = linear_interp(x_new)
+            actions.append(y_new)
+        actions = np.array(actions)
+        actions = actions.transpose()
+        actions = actions.tolist()
+        return actions[1:]
 
     def initialize_servos(self):
 
@@ -174,7 +200,8 @@ class MasterRobot:
         for t in self.threads:
             t.join()
 
-    def get_robot_data(self):
+    def read_robot_data(self):
+        # read data from master bot and interpolate the data,control the puppet gripper
         slave_angle = (
             self.grip_percentage[0] * (self.SLAVE_CLOSE - self.SLAVE_OPEN)
             + self.SLAVE_OPEN
@@ -183,7 +210,27 @@ class MasterRobot:
             self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
         )
 
-        return self.joint_pos, self.grip_percentage[0]
+        arm_data = self.joint_pos
+        if not all(isinstance(i, float) for i in arm_data[0]):
+            self.printer.error(
+                f"Not all elements in the first part of {self.robot_name} are floats"
+            )
+            return
+
+        interpolated_arm_data = self.action_interpolation(
+            self.last_arm_data, arm_data, self.interpolate_factor
+        )
+        self.last_arm_data = arm_data
+        if len(self.arm_data_deque) != 0:
+            self.printer.error(f"arm_data_deque is not empty")
+            return
+        self.arm_data_deque.extend(interpolated_arm_data)
+
+    def get_robot_data(self):
+        if len(self.arm_data_deque) == 0:
+            self.read_robot_data()
+        arm_data = self.arm_data_deque.popleft()
+        return arm_data, self.grip_percentage[0]
 
     def start_read_robot_data(self):
         # Shared data between threads
