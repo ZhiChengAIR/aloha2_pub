@@ -1,7 +1,3 @@
-import sys
-
-# sys.path.append("./uservo.py")
-# import Robot
 import serial
 import threading
 
@@ -14,6 +10,29 @@ import math
 from scipy.interpolate import interp1d
 import numpy as np
 
+import matplotlib.pyplot as plt
+def plot_data(data,name):
+    data = np.array(data)
+    # 创建一个图表和一个轴对象
+    fig, ax = plt.subplots()
+
+    # 对于每一维数据（总共n维），绘制一条曲线
+    for i in range(data.shape[1]):
+        ax.plot(data[:, i], label=f"Dim {i+1}")
+
+    # 添加图例
+    ax.legend(loc="upper right")
+
+    # 添加标签和标题
+    plt.xlabel("Time Steps")
+    plt.ylabel("Value")
+    plt.title(f"{name}")
+
+    path = f"/home/h666/code/other/{name}.jpg"
+    # 显示图表
+    plt.savefig(path)
+    print(f"saved fig in {path}")
+    # plt.show()
 
 def action_interpolation(robot_pose, action, interpolate_factor):
     x_points = np.array([0, 1])
@@ -41,6 +60,8 @@ class MasterRobot:
         self.joint_pos = None
         self.grip_percentage = None
         self.threads = None
+        self.plt_read_data = []
+        self.plt_publish_data = []
         self.robot_name = robot_name
         self.printer = printer
         self.read_time = read_time
@@ -101,6 +122,10 @@ class MasterRobot:
         self.SERVO_BAUDRATE = 115200
         self.uart_managers_arm = []
         self.uart_managers_gripper = []
+
+    def plot(self):
+        plot_data(self.plt_read_data,f"{self.robot_name}_read_data")
+        plot_data(self.plt_publish_data,f"{self.robot_name}_publish_data")
 
     def initialize_servos(self):
 
@@ -221,6 +246,7 @@ class MasterRobot:
             self.last_arm_data, arm_data, self.interpolate_factor
         )
         self.last_arm_data = arm_data
+        # self.plt_read_data.append(arm_data.copy())
         if len(self.arm_data_deque) != 0:
             self.printer.error(f"arm_data_deque is not empty")
             return
@@ -230,6 +256,7 @@ class MasterRobot:
         if len(self.arm_data_deque) == 0:
             self.read_robot_data()
         arm_data = self.arm_data_deque.popleft()
+        # self.plt_publish_data.append(arm_data)
         return arm_data, self.grip_percentage[0]
 
     def start_read_robot_data(self):

@@ -21,7 +21,7 @@ class ArmPublisher(Node):
         )
         publish_frequency = 210
         self.publish_time = 1.0 / publish_frequency
-        read_frequency = 30
+        read_frequency = 70
         self.read_time = 1.0 / read_frequency
 
         self.arm1 = MasterRobot(
@@ -118,6 +118,8 @@ def main(args=None):
     try:
         executor.spin()
     finally:
+        # node.arm1.plot()
+        # node.arm2.plot()
         node.destroy_node()
         rclpy.shutdown()
 
