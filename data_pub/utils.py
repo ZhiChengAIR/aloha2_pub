@@ -32,13 +32,13 @@ def action_interpolation(robot_pose, action, interpolate_factor):
 
 class MasterRobot:
 
-    def __init__(self, robot_name, printer, timer_period):
+    def __init__(self, robot_name, printer, read_time):
         self.joint_pos = None
         self.grip_percentage = None
         self.threads = None
         self.robot_name = robot_name
         self.printer = printer
-        self.timer_period = timer_period
+        self.read_time = read_time
         self.read_data_state = 0
         self.arm_data_deque = deque(maxlen=1000)
         self.last_arm_data = None
@@ -202,15 +202,7 @@ class MasterRobot:
             t.join()
 
     def read_robot_data(self):
-        # read data from master bot and interpolate the data,control the puppet gripper
-        slave_angle = (
-            self.grip_percentage[0] * (self.SLAVE_CLOSE - self.SLAVE_OPEN)
-            + self.SLAVE_OPEN
-        )
-        self.uart_managers_gripper[1].set_servo_angle(
-            self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
-        )
-
+        # read data from master bot and interpolate the data
         arm_data = self.joint_pos
         if not all(isinstance(i, float) for i in arm_data):
             self.printer.error(
@@ -253,17 +245,26 @@ class MasterRobot:
                     self.joint_pos[index] = self.SLAVE_HOME_POS_ARM[index] - (
                         angle - self.MASTER_HOME_POS_ARM[index]
                     )
-                time.sleep(self.timer_period)
+                time.sleep(self.read_time)
 
         def read_gripper_angle():
             while self.read_data_state:
+                # read data from master bot
                 angle_gripper = self.uart_managers_gripper[0].query_servo_angle(
                     self.SERVO_IDS_GRIPPER[0]
                 )
                 self.grip_percentage[0] = (self.MASTER_OPEN - angle_gripper) / (
                     self.MASTER_OPEN - self.MASTER_CLOSE
                 )
-                time.sleep(self.timer_period)
+                # contrl puppet bot based on data
+                slave_angle = (
+                    self.grip_percentage[0] * (self.SLAVE_CLOSE - self.SLAVE_OPEN)
+                    + self.SLAVE_OPEN
+                )
+                self.uart_managers_gripper[1].set_servo_angle(
+                    self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
+                )
+                time.sleep(self.read_time)
 
         self.threads = []
         for i, uservo in enumerate(self.uart_managers_arm):

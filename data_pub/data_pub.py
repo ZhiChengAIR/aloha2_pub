@@ -17,10 +17,12 @@ class ArmPublisher(Node):
             Float64MultiArray, "master_right/joint_states", 10
         )
         publish_frequency = 200
-        self.timer_period = 1.0 / publish_frequency
+        self.publish_time = 1.0 / publish_frequency
+        read_frequency = 100
+        self.read_time = 1.0 / read_frequency
 
         self.arm1 = MasterRobot(
-            "master_left", self.get_logger().info, self.timer_period
+            "master_left", self.get_logger().info, self.read_time
         )
         self.get_logger().info(
             f"Initializing the left master bot, it will take about a minute.........."
@@ -31,7 +33,7 @@ class ArmPublisher(Node):
         self.arm1.start_read_robot_data()
 
         self.arm2 = MasterRobot(
-            "master_right", self.get_logger().info, self.timer_period
+            "master_right", self.get_logger().info, self.read_time
         )
         self.get_logger().info(
             f"Initializing the right master bot, it will take about a minute..........!"
@@ -41,8 +43,8 @@ class ArmPublisher(Node):
         self.arm2.set_damping_mode()
         self.arm2.start_read_robot_data()
 
-        self.timer1 = self.create_timer(self.timer_period, self.publish_arm1_info)
-        self.timer2 = self.create_timer(self.timer_period, self.publish_arm2_info)
+        self.timer1 = self.create_timer(self.publish_time, self.publish_arm1_info)
+        self.timer2 = self.create_timer(self.publish_time, self.publish_arm2_info)
 
     def __del__(self):
         self.arm1.stop_read_robot_data()
