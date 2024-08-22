@@ -32,7 +32,7 @@ def action_interpolation(robot_pose, action, interpolate_factor):
 
 class MasterRobot:
 
-    def __init__(self, robot_name, printer, read_time):
+    def __init__(self, robot_name, printer, read_time,publish_time):
         self.joint_pos = None
         self.grip_percentage = None
         self.threads = None
@@ -42,7 +42,8 @@ class MasterRobot:
         self.read_data_state = 0
         self.arm_data_deque = deque(maxlen=1000)
         self.last_arm_data = None
-        self.interpolate_factor = 2
+        self.interpolate_factor = read_time/publish_time
+        self.printer(f"{self.interpolate_factor=}")
         if self.robot_name == "master_left":
             self.SERVO_PORTS_ARM = [
                 "/dev/ttyCH9344USB0",
@@ -236,6 +237,7 @@ class MasterRobot:
 
         def read_servo_angle(index, uservo, servo_id):
             while self.read_data_state:
+                t0 = time.time()
                 angle = uservo.query_servo_angle(servo_id)
                 if index == 2:
                     self.joint_pos[index] = self.SLAVE_HOME_POS_ARM[index] + (
@@ -245,11 +247,12 @@ class MasterRobot:
                     self.joint_pos[index] = self.SLAVE_HOME_POS_ARM[index] - (
                         angle - self.MASTER_HOME_POS_ARM[index]
                     )
-                time.sleep(self.read_time)
+                time.sleep(self.read_time-(time.time() - t0))
 
         def read_gripper_angle():
             while self.read_data_state:
                 # read data from master bot
+                t0 = time.time()
                 angle_gripper = self.uart_managers_gripper[0].query_servo_angle(
                     self.SERVO_IDS_GRIPPER[0]
                 )
@@ -264,7 +267,7 @@ class MasterRobot:
                 self.uart_managers_gripper[1].set_servo_angle(
                     self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
                 )
-                time.sleep(self.read_time)
+                time.sleep(self.read_time-(time.time() - t0))
 
         self.threads = []
         for i, uservo in enumerate(self.uart_managers_arm):

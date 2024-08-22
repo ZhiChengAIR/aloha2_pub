@@ -18,11 +18,11 @@ class ArmPublisher(Node):
         )
         publish_frequency = 200
         self.publish_time = 1.0 / publish_frequency
-        read_frequency = 100
+        read_frequency = 50
         self.read_time = 1.0 / read_frequency
 
         self.arm1 = MasterRobot(
-            "master_left", self.get_logger().info, self.read_time
+            "master_left", self.get_logger().info, self.read_time,self.publish_time
         )
         self.get_logger().info(
             f"Initializing the left master bot, it will take about a minute.........."
@@ -33,7 +33,7 @@ class ArmPublisher(Node):
         self.arm1.start_read_robot_data()
 
         self.arm2 = MasterRobot(
-            "master_right", self.get_logger().info, self.read_time
+            "master_right", self.get_logger().info, self.read_time,self.publish_time
         )
         self.get_logger().info(
             f"Initializing the right master bot, it will take about a minute..........!"
