@@ -2,8 +2,11 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import Float64MultiArray
-from data_pub.utils import MasterRobot
 import time
+
+# from data_pub.utils import MasterRobot
+
+from utils import MasterRobot
 
 
 class ArmPublisher(Node):
@@ -16,13 +19,13 @@ class ArmPublisher(Node):
         self.arm2_publisher = self.create_publisher(
             Float64MultiArray, "master_right/joint_states", 10
         )
-        publish_frequency = 200
+        publish_frequency = 210
         self.publish_time = 1.0 / publish_frequency
-        read_frequency = 50
+        read_frequency = 30
         self.read_time = 1.0 / read_frequency
 
         self.arm1 = MasterRobot(
-            "master_left", self.get_logger().info, self.read_time,self.publish_time
+            "master_left", self.get_logger().info, self.read_time, self.publish_time
         )
         self.get_logger().info(
             f"Initializing the left master bot, it will take about a minute.........."
@@ -33,7 +36,7 @@ class ArmPublisher(Node):
         self.arm1.start_read_robot_data()
 
         self.arm2 = MasterRobot(
-            "master_right", self.get_logger().info, self.read_time,self.publish_time
+            "master_right", self.get_logger().info, self.read_time, self.publish_time
         )
         self.get_logger().info(
             f"Initializing the right master bot, it will take about a minute..........!"
