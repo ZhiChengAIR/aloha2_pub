@@ -4,9 +4,9 @@ from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import Float64MultiArray
 import time
 
-# from data_pub.utils import MasterRobot
+from data_pub.utils import MasterRobot
 
-from utils import MasterRobot
+# from utils import MasterRobot
 
 
 class ArmPublisher(Node):
@@ -19,9 +19,9 @@ class ArmPublisher(Node):
         self.arm2_publisher = self.create_publisher(
             Float64MultiArray, "master_right/joint_states", 10
         )
-        publish_frequency = 210
+        publish_frequency = 160
         self.publish_time = 1.0 / publish_frequency
-        read_frequency = 70
+        read_frequency = 80
         self.read_time = 1.0 / read_frequency
 
         self.arm1 = MasterRobot(
@@ -48,6 +48,7 @@ class ArmPublisher(Node):
 
         self.timer1 = self.create_timer(self.publish_time, self.publish_arm1_info)
         self.timer2 = self.create_timer(self.publish_time, self.publish_arm2_info)
+        time.sleep(1)
 
     def __del__(self):
         self.arm1.stop_read_robot_data()

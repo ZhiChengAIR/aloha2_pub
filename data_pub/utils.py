@@ -1,16 +1,18 @@
 import serial
 import threading
 
-# from data_pub.uservo import UartServoManager
+from data_pub.uservo import UartServoManager
 
-from uservo import UartServoManager
+# from uservo import UartServoManager
 import time
 from collections import deque
 import math
 from scipy.interpolate import interp1d
 import numpy as np
-
 import matplotlib.pyplot as plt
+
+READ_TIME_MINIMUM = 1/80
+
 def plot_data(data,name):
     data = np.array(data)
     # 创建一个图表和一个轴对象
@@ -70,6 +72,8 @@ class MasterRobot:
         self.last_arm_data = None
         self.interpolate_factor = read_time / publish_time
         self.printer(f"{self.interpolate_factor=}")
+        self.start_read_event = [threading.Event()]*7
+        self.read_bot_state = [0]*7
         if self.robot_name == "master_left":
             self.SERVO_PORTS_ARM = [
                 "/dev/ttyCH9344USB0",
@@ -232,9 +236,12 @@ class MasterRobot:
 
     def read_robot_data(self):
         # read data from master bot and interpolate the data
+        if self.read_bot_state!= [1]*7:
+            self.printer(f"{self.robot_name}_{self.read_bot_state=}")
+
         arm_data = self.joint_pos
         if not all(isinstance(i, float) for i in arm_data):
-            self.printer.error(
+            self.printer(
                 f"Not all elements in the first part of {self.robot_name} are floats"
             )
             return
@@ -251,6 +258,9 @@ class MasterRobot:
             self.printer.error(f"arm_data_deque is not empty")
             return
         self.arm_data_deque.extend(interpolated_arm_data)
+        self.read_bot_state= [0]*7
+        for i in self.start_read_event:
+            i.set()
 
     def get_robot_data(self):
         if len(self.arm_data_deque) == 0:
@@ -266,8 +276,11 @@ class MasterRobot:
         self.read_data_state = 1
 
         def read_servo_angle(index, uservo, servo_id):
-            while self.read_data_state:
-                t0 = time.time()
+            while 1:
+                self.start_read_event[index].wait()
+                ts = self.read_time - READ_TIME_MINIMUM
+                if ts > 0:
+                    time.sleep(ts)
                 angle = uservo.query_servo_angle(servo_id)
                 if index == 2:
                     self.joint_pos[index] = self.SLAVE_HOME_POS_ARM[index] + (
@@ -277,16 +290,19 @@ class MasterRobot:
                     self.joint_pos[index] = self.SLAVE_HOME_POS_ARM[index] - (
                         angle - self.MASTER_HOME_POS_ARM[index]
                     )
-                ts = self.read_time - (time.time() - t0)
-                if ts > 0:
-                    time.sleep(ts)
-                else:
-                    self.printer(f"{ts=}")
+                self.start_read_event[index].clear()
+                self.read_bot_state[index] = 1
+                
 
         def read_gripper_angle():
-            while self.read_data_state:
+            while 1:
                 # read data from master bot
-                t0 = time.time()
+                index = 6
+                self.start_read_event[index].wait()
+                ts = self.read_time - READ_TIME_MINIMUM
+                if ts > 0:
+                    time.sleep(ts)
+                
                 angle_gripper = self.uart_managers_gripper[0].query_servo_angle(
                     self.SERVO_IDS_GRIPPER[0]
                 )
@@ -301,11 +317,8 @@ class MasterRobot:
                 self.uart_managers_gripper[1].set_servo_angle(
                     self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
                 )
-                ts = self.read_time - (time.time() - t0)
-                if ts > 0:
-                    time.sleep(ts)
-                else:
-                    self.printer(f"{ts=}")
+                self.start_read_event[index].clear()
+                self.read_bot_state[index] = 1
 
         self.threads = []
         for i, uservo in enumerate(self.uart_managers_arm):
@@ -313,10 +326,12 @@ class MasterRobot:
                 target=read_servo_angle, args=(i, uservo, self.SERVO_IDS_ARM[i])
             )
             self.threads.append(t)
+            self.start_read_event[i].set()
             t.start()
 
         gripper_thread = threading.Thread(target=read_gripper_angle)
         self.threads.append(gripper_thread)
+        self.start_read_event[6].set()
         gripper_thread.start()
 
 
