@@ -83,11 +83,11 @@ class MasterRobot:
                 "/dev/ttyCH9344USB4",
                 "/dev/ttyCH9344USB5",
             ]
-            self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB6", "/dev/ttyCH9344USB7"]
-            # self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB6"]
+            # self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB6", "/dev/ttyCH9344USB7"]
+            self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB6"]
             self.SERVO_IDS_ARM = [0, 1, 2, 3, 4, 5]
-            self.SERVO_IDS_GRIPPER = [6, 17]
-            # self.SERVO_IDS_GRIPPER = [6]
+            # self.SERVO_IDS_GRIPPER = [6, 17]
+            self.SERVO_IDS_GRIPPER = [6]
             self.MASTER_HOME_POS_ARM = [6, 4, -6, -4, 91, -2]
             self.MASTER_OPEN = -21.3
             self.MASTER_CLOSE = -62
@@ -103,11 +103,11 @@ class MasterRobot:
                 "/dev/ttyCH9344USB12",
                 "/dev/ttyCH9344USB13",
             ]
-            self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB14", "/dev/ttyCH9344USB15"]
-            # self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB14"]
+            # self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB14", "/dev/ttyCH9344USB15"]
+            self.SERVO_PORTS_GRIPPER = ["/dev/ttyCH9344USB14"]
             self.SERVO_IDS_ARM = [10, 11, 12, 13, 14, 15]
-            self.SERVO_IDS_GRIPPER = [16, 7]
-            # self.SERVO_IDS_GRIPPER = [16]
+            # self.SERVO_IDS_GRIPPER = [16, 7]
+            self.SERVO_IDS_GRIPPER = [16]
             self.MASTER_HOME_POS_ARM = [-46, 93, -82, -4, -96, 14]
             self.MASTER_OPEN = 5
             self.MASTER_CLOSE = 59
@@ -145,9 +145,9 @@ class MasterRobot:
                     timeout=0,
                 )
                 self.uart_managers_arm.append(UartServoManager(uart))
-                self.printer(f"左机械臂串口 {port} 初始化成功")
+                self.printer(f"机械臂串口 {port} 初始化成功")
             except serial.SerialException as e:
-                self.printer(f"左机械臂串口 {port} 初始化失败: {e}")
+                self.printer(f"机械臂串口 {port} 初始化失败: {e}")
 
         for port in self.SERVO_PORTS_GRIPPER:
             try:
@@ -310,13 +310,13 @@ class MasterRobot:
                     self.MASTER_OPEN - self.MASTER_CLOSE
                 )
                 # contrl puppet bot based on data
-                slave_angle = (
-                    self.grip_percentage[0] * (self.SLAVE_CLOSE - self.SLAVE_OPEN)
-                    + self.SLAVE_OPEN
-                )
-                self.uart_managers_gripper[1].set_servo_angle(
-                    self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
-                )
+                # slave_angle = (
+                #     self.grip_percentage[0] * (self.SLAVE_CLOSE - self.SLAVE_OPEN)
+                #     + self.SLAVE_OPEN
+                # )
+                # self.uart_managers_gripper[1].set_servo_angle(
+                #     self.SERVO_IDS_GRIPPER[1], slave_angle, interval=0
+                # )
                 self.start_read_event[index].clear()
                 self.read_bot_state[index] = 1
 
