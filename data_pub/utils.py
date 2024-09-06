@@ -1,8 +1,6 @@
 import serial
 import threading
-
 from data_pub.uservo import UartServoManager
-
 # from uservo import UartServoManager
 import time
 from collections import deque
@@ -132,10 +130,9 @@ class MasterRobot:
         plot_data(self.plt_publish_data,f"{self.robot_name}_publish_data")
 
     def initialize_servos(self):
-
-        for port in self.SERVO_PORTS_ARM:
+        def initialize_servo_port(i,port):
             try:
-                self.printer(f"初始化左机械臂串口 {port}")
+                self.printer(f"初始化机械臂串口 {port}")
                 uart = serial.Serial(
                     port=port,
                     baudrate=self.SERVO_BAUDRATE,
@@ -144,14 +141,14 @@ class MasterRobot:
                     bytesize=8,
                     timeout=0,
                 )
-                self.uart_managers_arm.append(UartServoManager(uart))
+                self.uart_managers_arm[i] = UartServoManager(uart)
                 self.printer(f"机械臂串口 {port} 初始化成功")
             except serial.SerialException as e:
                 self.printer(f"机械臂串口 {port} 初始化失败: {e}")
 
-        for port in self.SERVO_PORTS_GRIPPER:
+        def initialize_gripper_port(i,port):
             try:
-                self.printer(f"初始化串口 {port}")
+                self.printer(f"初始化夹爪串口 {port}")
                 uart = serial.Serial(
                     port=port,
                     baudrate=self.SERVO_BAUDRATE,
@@ -160,10 +157,33 @@ class MasterRobot:
                     bytesize=8,
                     timeout=0,
                 )
-                self.uart_managers_gripper.append(UartServoManager(uart))
-                self.printer(f"串口 {port} 初始化成功")
+                self.uart_managers_gripper[i]=UartServoManager(uart)
+                self.printer(f"夹爪串口 {port} 初始化成功")
             except serial.SerialException as e:
-                self.printer(f"串口 {port} 初始化失败: {e}")
+                self.printer(f"夹爪串口 {port} 初始化失败: {e}")
+        
+        self.uart_managers_arm = [0]*len(self.SERVO_PORTS_ARM)
+        self.uart_managers_gripper = [0]*len(self.SERVO_PORTS_GRIPPER)
+        threads_list = []
+        for i, port in enumerate(self.SERVO_PORTS_ARM):
+            t = threading.Thread(
+                target=initialize_servo_port, args=(i,port)
+            )
+            threads_list.append(t)
+            t.start()
+
+        for i, port in enumerate(self.SERVO_PORTS_GRIPPER):
+            t = threading.Thread(
+                target=initialize_gripper_port, args=(i,port)
+            )
+            threads_list.append(t)
+            t.start()
+        
+        for i, port in enumerate(threads_list):
+            threads_list[i].join()
+        pass
+
+
 
     def set_initial_positions(self):
         # 设置机械臂舵机初始角度ba
