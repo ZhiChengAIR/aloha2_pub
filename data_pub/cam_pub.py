@@ -27,7 +27,7 @@ class CameraPublisher(Node):
             self.get_logger().error(f"Failed to capture image from {self.get_name()}")
             return
         # Compress the image using JPEG format
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 10]
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
         result, encimg = cv2.imencode('.jpg', frame, encode_param)
         image_msg = CompressedImage()
         image_msg.header.stamp = self.get_clock().now().to_msg()
