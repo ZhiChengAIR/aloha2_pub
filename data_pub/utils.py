@@ -89,8 +89,8 @@ class MasterRobot:
             self.MASTER_HOME_POS_ARM = [6, 4, -6, -4, 91, -2]
             self.MASTER_OPEN = -21.3
             self.MASTER_CLOSE = -62
-            self.SLAVE_OPEN = -27
-            self.SLAVE_CLOSE = 42
+            self.SLAVE_OPEN = 170
+            self.SLAVE_CLOSE = -111
 
         elif self.robot_name == "master_right":
             self.SERVO_PORTS_ARM = [
@@ -109,8 +109,8 @@ class MasterRobot:
             self.MASTER_HOME_POS_ARM = [-46, 93, -82, -4, -96, 14]
             self.MASTER_OPEN = 5
             self.MASTER_CLOSE = 59
-            self.SLAVE_OPEN = -32
-            self.SLAVE_CLOSE = 41
+            self.SLAVE_OPEN = 115
+            self.SLAVE_CLOSE = -165
 
         self.MASTER_HOME_POS_GRIPPER = [self.MASTER_OPEN, self.SLAVE_OPEN]
         self.SLAVE_HOME_POS_ARM = [
