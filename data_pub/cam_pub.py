@@ -10,7 +10,7 @@ class CameraPublisher(Node):
     def __init__(self, camera_name, device_id, topic_name):
         super().__init__(camera_name)
         self.get_logger().info(f"Device ID: {device_id}, Topic Name: {topic_name}")
-        self.publisher_ = self.create_publisher(CompressedImage, topic_name, 50)
+        self.publisher_ = self.create_publisher(CompressedImage, topic_name, 10)
         self.bridge = CvBridge()
         self.cap = cv2.VideoCapture(device_id)
         if not self.cap.isOpened():
