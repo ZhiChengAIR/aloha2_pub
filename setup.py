@@ -24,11 +24,6 @@ setup(
      entry_points={
         'console_scripts': [
             'pub=data_pub.data_pub:main',
-            # Camera publishers
-            'cam_high_pub = data_pub.cam_pub:main',
-            'cam_wrist_left_pub = data_pub.cam_pub:main',
-            'cam_low_pub = data_pub.cam_pub:main',
-            'cam_wrist_right_pub = data_pub.cam_pub:main',
             # Arm publishers
             'arm_left_pub = data_pub.data_pub:main',
             'arm_right_pub = data_pub.data_pub:main',
