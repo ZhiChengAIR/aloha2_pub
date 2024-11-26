@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'data_pub'
+package_name = 'aloha2_pub'
 
 setup(
     name=package_name,

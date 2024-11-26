@@ -1,7 +1,9 @@
 '''
-Fashion Star 串行总线舵机Python SDK
+Fashion Star 总线伺服舵机Python SDK
 --------------------------------------------------
-
+ * 作者: 深圳市华馨京科技有限公司
+ * 网站：https://fashionrobo.com/
+ * 更新时间: 2024/08/20
 --------------------------------------------------
 '''
 import time
@@ -245,9 +247,11 @@ class UartServoManager:
 	CODE_SET_SERVO_ANGLE_MTURN = 13 # 多圈角度设置
 	CODE_SET_SERVO_ANGLE_MTURN_BY_INTERVAL = 14 # 多圈角度设置(指定周期)
 	CODE_SET_SERVO_ANGLE_MTURN_BY_VELOCITY = 15 # 多圈角度设置(指定转速)
+	CODE_RESET_MULTI_TURN_ANGLE = 17 # 多圈角度重置
 	CODE_RESET_USER_DATA = 2 # 用户表数据重置
 	CODE_READ_DATA = 3 # 读取内存表
 	CODE_WRITE_DATA = 4 # 写入内存表
+	CODE_SET_ORIGIN_POINT = 23 # 设置原点
 	# 响应数据包黑名单
 	RESPONSE_CODE_NEGLECT = []
 	# 定义轮式模式的四种控制方法
@@ -260,6 +264,7 @@ class UartServoManager:
 	ADDRESS_CURRENT = 2
 	ADDRESS_POWER = 3
 	ADDRESS_TEMPERATURE = 4
+	ADDRESS_STATUS = 5
 	def __init__(self, uart, is_scan_servo=True, srv_num=254, mean_dps=100, is_debug=False):
 		self.is_debug = is_debug
 		self.uart = uart
@@ -636,6 +641,19 @@ class UartServoManager:
 		'''查询温度,为ADC值'''
 		temp_bytes = self.read_data(servo_id, self.ADDRESS_TEMPERATURE)
 		return float(struct.unpack('<H', temp_bytes)[0])
+	#  舵机工作状态标志位
+	#  BIT[0] - 执行指令置1，执行完成后清零。
+	#  BIT[1] - 执行指令错误置1，在下次正确执行后清零。
+	#  BIT[2] - 堵转错误置1，解除堵转后清零。
+	#  BIT[3] - 电压过高置1，电压恢复正常后清零。
+	#  BIT[4] - 电压过低置1，电压恢复正常后清零。
+	#  BIT[5] - 电流错误置1，电流恢复正常后清零。
+	#  BIT[6] - 功率错误置1，功率恢复正常后清零。
+	#  BIT[7] - 温度错误置1，温度恢复正常后清零。
+	def query_status(self, servo_id):
+		'''查询工作状态'''
+		status_bytes = self.read_data(servo_id, self.ADDRESS_STATUS)
+		return struct.unpack('<B', status_bytes)[0]
 
 	def update(self, is_empty_buffer=False, wait_response=False, timeout=0.02):
 		'''舵机管理器的定时器回调函数'''
@@ -700,3 +718,15 @@ class UartServoManager:
 				t_current = time.time()
 				if t_current - t_start > timeout:
 					break
+
+	def set_origin_point(self, servo_id:int):
+		'''发送设置原点请求'''
+		self.send_request(self.CODE_SET_ORIGIN_POINT, struct.pack('<BB', servo_id, 0))
+
+	def reset_multi_turn_angle(self, servo_id:int):
+		'''发送重设多圈角度请求'''
+		self.send_request(self.CODE_RESET_MULTI_TURN_ANGLE, struct.pack('<B', servo_id))
+	
+	def disable_torque(self, servo_id:int):
+		'''发送禁用力矩请求'''
+		self.wheel_stop(servo_id)
