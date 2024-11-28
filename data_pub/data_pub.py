@@ -23,6 +23,9 @@ class ArmPublisher(Node):
         self.publish_time = 1.0 / publish_frequency
         read_frequency = 80
         self.read_time = 1.0 / read_frequency
+        self.last_arm1_data = None
+        self.last_arm2_data = None
+        self.arm_alpha = 0.5
 
         self.arm1 = MasterRobot(
             "master_left", self.get_logger().info, self.read_time, self.publish_time
@@ -70,6 +73,14 @@ class ArmPublisher(Node):
             self.get_logger().error("arm1_info is not in the expected format")
             return
         arm1_data = arm1_info[0] + [arm1_info[1]]
+
+        if self.last_arm1_data != None:
+            for index, item in enumerate(arm1_data):
+                arm1_data[index] = arm1_data[index] * self.arm_alpha + self.last_arm1_data[index] * (1-self.arm_alpha)
+            self.last_arm1_data = arm1_data
+        else:
+            self.last_arm1_data = arm1_data
+
         arm1_data.append(timestamp_)
         if not all(isinstance(i, float) for i in arm1_data):
             self.get_logger().error(
@@ -101,6 +112,14 @@ class ArmPublisher(Node):
             )
             return
         arm2_data = arm2_info[0] + [arm2_info[1]]
+
+        if self.last_arm2_data != None:
+            for index, item in enumerate(arm2_data):
+                arm2_data[index] = arm2_data[index] * self.arm_alpha  + self.last_arm2_data[index] * (1-self.arm_alpha)
+            self.last_arm2_data = arm2_data
+        else:
+            self.last_arm2_data = arm2_data
+        
         arm2_data.append(_timestamp)
         if not all(isinstance(i, float) for i in arm2_data):
             self.get_logger().error("Not all elements in arm2_info are floats")
