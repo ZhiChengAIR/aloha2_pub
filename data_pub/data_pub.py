@@ -25,7 +25,7 @@ class ArmPublisher(Node):
         self.read_time = 1.0 / read_frequency
         self.last_arm1_data = None
         self.last_arm2_data = None
-        self.arm_alpha = 0.5
+        self.arm_alpha = 0.1
 
         self.arm1 = MasterRobot(
             "master_left", self.get_logger().info, self.read_time, self.publish_time
